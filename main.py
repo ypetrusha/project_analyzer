@@ -2,6 +2,7 @@ import os
 import openai
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from tkinter import ttk  # import ttk for the Combobox widget
 
 
 class ProjectAnalyzer:
@@ -15,6 +16,7 @@ class ProjectAnalyzer:
                         "I'm going to send my project files one by one including relative file path and EOF mark. "
                         "Please, no comments about the code at all. Just confirm that you received EOF mark."},
         ]
+        self.model = "gpt-3.5-turbo"
 
     def send_file(self, file_path, file_content):
         messages = self.conversation_history + [
@@ -22,7 +24,7 @@ class ProjectAnalyzer:
         ]
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=self.model,
             messages=messages,
             max_tokens=150,
             n=1,
@@ -48,7 +50,7 @@ class ProjectAnalyzer:
         ]
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=self.model,
             messages=messages,
             max_tokens=1000,
             n=1,
@@ -62,72 +64,57 @@ class ProjectAnalyzer:
 
 class ProjectAnalyzerUI:
 
-    def __init__(self, analyzer):
-        self.analyzer = analyzer
-
-        # Create the main window
-        self.root = tk.Tk()
+    def __init__(self, root):
+        self.root = root
         self.root.title("Project Analyzer")
+        self.analyzer = ProjectAnalyzer()
 
-        self.create_ui()
-
-    def create_ui(self):
         # Create directory selection UI
-        self.dir_entry = self.create_directory_ui()
+        dir_label = tk.Label(root, text="Project Folder:")
+        dir_label.grid(row=0, column=0, sticky="e", padx=(10, 5), pady=10)
+
+        self.dir_entry = tk.Entry(root, width=60)
+        self.dir_entry.grid(row=0, column=1, padx=(0, 5), pady=10)
+
+        browse_button = tk.Button(root, text="Browse", command=self.browse_directory)
+        browse_button.grid(row=0, column=2, padx=(0, 10), pady=10)
+
+        # Create model selection UI
+        model_label = tk.Label(root, text="Model:")
+        model_label.grid(row=1, column=0, sticky="e", padx=(10, 5), pady=10)
+
+        self.model_combobox = ttk.Combobox(root, values=["gpt-3.5-turbo", "text-davinci-003", "text-curie-003"], state='readonly')
+        self.model_combobox.grid(row=1, column=1, padx=(0, 5), pady=10)
+        self.model_combobox.set("gpt-3.5-turbo")  # set the default value
 
         # Create send project files button
-        send_files_button = tk.Button(self.root, text="Send Project Files", command=self.send_project_files)
-        send_files_button.grid(row=1, column=0, columnspan=3, pady=(0, 10))
+        send_files_button = tk.Button(root, text="Send Project Files", command=self.send_project_files)
+        send_files_button.grid(row=2, column=0, columnspan=3, pady=(0, 10))
 
         # Create specific request input UI
-        self.specific_request_text = self.create_specific_request_ui()
+        specific_request_label = tk.Label(root, text="Specific Request:")
+        specific_request_label.grid(row=3, column=0, sticky="e", padx=(10, 5), pady=10)
+
+        self.specific_request_text = tk.Text(root, wrap=tk.WORD, width=60, height=5)
+        self.specific_request_text.grid(row=3, column=1, padx=(0, 5), pady=10)
+
+        send_request_button = tk.Button(root, text="Send", command=self.send_specific_request)
+        send_request_button.grid(row=3, column=2, padx=(0, 10), pady=10)
 
         # Create output text area
-        self.output_text = self.create_output_text_area()
+        output_label = tk.Label(root, text="Output:")
+        output_label.grid(row=4, column=0, sticky="nw", padx=(10, 5), pady=(0, 5))
+
+        self.output_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)
+        self.output_text.grid(row=5, column=0, columnspan=3, padx=(10, 10), pady=(0, 10), sticky="nsew")
+
+        output_scrollbar = tk.Scrollbar(root, command=self.output_text.yview)
+        output_scrollbar.grid(row=5, column=3, sticky="ns", pady=(0, 10))
+        self.output_text["yscrollcommand"] = output_scrollbar.set
 
         # Allow the main window to resize its columns and rows
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(5, weight=1)
-
-        # Run the main loop
-        self.root.mainloop()
-
-    def create_directory_ui(self):
-        dir_label = tk.Label(self.root, text="Project Folder:")
-        dir_label.grid(row=0, column=0, sticky="e", padx=(10, 5), pady=10)
-
-        dir_entry = tk.Entry(self.root, width=60)
-        dir_entry.grid(row=0, column=1, padx=(0, 5), pady=10)
-
-        browse_button = tk.Button(self.root, text="Browse", command=self.browse_directory)
-        browse_button.grid(row=0, column=2, padx=(0, 10), pady=10)
-
-        return dir_entry
-
-    def create_specific_request_ui(self):
-        specific_request_label = tk.Label(self.root, text="Specific Request:")
-        specific_request_label.grid(row=2, column=0, sticky="e", padx=(10, 5), pady=10)
-
-        specific_request_text = tk.Text(self.root, wrap=tk.WORD, width=60, height=5)
-        specific_request_text.grid(row=2, column=1, padx=(0, 5), pady=10)
-
-        send_request_button = tk.Button(self.root, text="Send", command=self.send_specific_request)
-        send_request_button.grid(row=2, column=2, padx=(0, 10), pady=10)
-
-        return specific_request_text
-
-    def create_output_text_area(self):
-        output_label = tk.Label(self.root, text="Output:")
-        output_label.grid(row=4, column=0, sticky="nw", padx=(10, 5), pady=(0, 5))
-
-        output_text = tk.Text(self.root, wrap=tk.WORD, width=80, height=20)
-        output_text.grid(row=5, column=0, columnspan=3, padx=(10, 10), pady=(0, 10), sticky="nsew")
-
-        output_scrollbar = tk.Scrollbar(self.root, command=output_text.yview)
-        output_scrollbar.grid(row=5, column=3, sticky="ns", pady=(0, 10))
-        output_text["yscrollcommand"] = output_scrollbar.set
-
-        return output_text
 
     def browse_directory(self):
         folder_path = filedialog.askdirectory()
@@ -142,9 +129,14 @@ class ProjectAnalyzerUI:
             messagebox.showerror("Error", "Please select a project folder")
             return
 
-        self.output_text.delete(1.0, tk.END)
+        # Set the model
+        self.analyzer.model = self.model_combobox.get()
+
+        # Initialize the generator for the project files
         self.file_generator = self.analyzer.send_files_to_chat(project_folder)
-        self.process_next_file()
+
+        # Schedule the processing of the first file
+        self.root.after(1, self.process_next_file)
 
     def process_next_file(self):
         try:
@@ -173,5 +165,6 @@ class ProjectAnalyzerUI:
 
 
 if __name__ == "__main__":
-    analyzer = ProjectAnalyzer()
-    ui = ProjectAnalyzerUI(analyzer)
+    root = tk.Tk()
+    ProjectAnalyzerUI(root)
+    root.mainloop()
