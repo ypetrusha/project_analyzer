@@ -29,7 +29,7 @@ class ProjectAnalyzer:
             max_tokens=150,
             n=1,
             stop=None,
-            temperature=0.5,
+            temperature=0,
         )
 
         self.conversation_history = messages
@@ -52,10 +52,10 @@ class ProjectAnalyzer:
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
-            max_tokens=1000,
+            max_tokens=2300,
             n=1,
             stop=None,
-            temperature=0.5,
+            temperature=0.1,
         )
 
         self.conversation_history = messages
