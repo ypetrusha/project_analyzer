@@ -12,11 +12,11 @@ class ProjectAnalyzer:
         openai.api_key = self.api_key
         self.conversation_history = [
             {"role": "system",
-            "content": "You are a helpful assistant that analyzes Python code and provides suggestions for improvements. "
-                        "I'm going to send my project files one by one including relative file path and EOF mark. "
-                        "Please, no comments about the code at all. Just confirm that you received EOF mark."},
+            "content": "You will be provided with project files one by one including relative file path and EOF mark."
+                       "In response reply exactly 'EOF received' or 'EOF not found'. Response size limited by 13 symbols."
+                        }
         ]
-        self.model = "gpt-3.5-turbo"
+        self.model = "gpt-3.5-turbo-16k"
 
     def send_file(self, file_path, file_content):
         messages = self.conversation_history + [
@@ -26,7 +26,7 @@ class ProjectAnalyzer:
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
-            max_tokens=150,
+            max_tokens=10,
             n=1,
             stop=None,
             temperature=0,
@@ -48,17 +48,18 @@ class ProjectAnalyzer:
         messages = self.conversation_history + [
             {"role": "user", "content": request_text}
         ]
-
+        print(messages)
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
-            max_tokens=2300,
+            max_tokens=8000,
             n=1,
             stop=None,
             temperature=0.1,
         )
 
         self.conversation_history = messages
+        print(response)
         return (f"Request: {request_text}\nResponse: {response.choices[0].message['content']}\n{'-' * 80}\n")
 
 
@@ -83,9 +84,9 @@ class ProjectAnalyzerUI:
         model_label = tk.Label(root, text="Model:")
         model_label.grid(row=1, column=0, sticky="e", padx=(10, 5), pady=10)
 
-        self.model_combobox = ttk.Combobox(root, values=["gpt-3.5-turbo", "text-davinci-003", "text-curie-003"], state='readonly')
+        self.model_combobox = ttk.Combobox(root, values=["gpt-3.5-turbo-16k", "text-davinci-003", "text-curie-003"], state='readonly')
         self.model_combobox.grid(row=1, column=1, padx=(0, 5), pady=10)
-        self.model_combobox.set("gpt-3.5-turbo")  # set the default value
+        self.model_combobox.set("gpt-3.5-turbo-16k")  # set the default value
 
         # Create send project files button
         send_files_button = tk.Button(root, text="Send Project Files", command=self.send_project_files)
@@ -150,6 +151,16 @@ class ProjectAnalyzerUI:
             self.root.after(1, self.process_next_file)  # schedule the processing of the next file
         except StopIteration:
             pass  # done processing files
+            self.analyzer.conversation_history += [
+                {"role": "system", "content":
+                    "You are senior developer profound in python."
+                    "You will be asked to refactor the code, add features and test coverage. "
+                    "Answer providing full content for affected files."
+                    "Provide your answers in the following form:"
+                    "\n```\n\n---{path}---\n{file_content}\n---EOF---```\n"
+                    "No other formatting."
+                 }
+            ]
         except Exception as e:
             messagebox.showerror("Error", str(e))  # show error message if any exceptions occur
 
