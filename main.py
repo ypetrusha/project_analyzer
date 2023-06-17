@@ -5,16 +5,25 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk  # import ttk for the Combobox widget
 
 
+config = {
+    "initial_prompt": "You will be provided with project files one by one including relative file path and EOF mark."
+                      "In response reply exactly 'EOF received' or 'EOF not found'.",
+
+    "analyzer_prompt": "You are software developer profound in python coding."
+                       "You will be asked to refactor the code, add features and test coverage. "
+                       "Answer providing full content for affected files. "
+                       "Provide file content in the following form:"
+                       "\n```\n\n---{path}---\n{file_content}\n---EOF---```\n"
+                       "No other formatting."
+}
+
 class ProjectAnalyzer:
 
     def __init__(self):
         self.api_key = os.environ["OPENAI_API_KEY"]
         openai.api_key = self.api_key
         self.conversation_history = [
-            {"role": "system",
-            "content": "You will be provided with project files one by one including relative file path and EOF mark."
-                       "In response reply exactly 'EOF received' or 'EOF not found'. Response size limited by 13 symbols."
-                        }
+            {"role": "system", "content": config['initial_prompt']}
         ]
         self.model = "gpt-3.5-turbo-16k"
 
@@ -65,10 +74,10 @@ class ProjectAnalyzer:
 
 class ProjectAnalyzerUI:
 
-    def __init__(self, root):
+    def __init__(self, root, analyzer):
         self.root = root
         self.root.title("Project Analyzer")
-        self.analyzer = ProjectAnalyzer()
+        self.analyzer = analyzer
 
         # Create directory selection UI
         dir_label = tk.Label(root, text="Project Folder:")
@@ -150,32 +159,24 @@ class ProjectAnalyzerUI:
             self.output_text.insert(tk.END, result_text)
             self.root.after(1, self.process_next_file)  # schedule the processing of the next file
         except StopIteration:
-            pass  # done processing files
-            self.analyzer.conversation_history += [
-                {"role": "system", "content":
-                    "You are senior developer profound in python."
-                    "You will be asked to refactor the code, add features and test coverage. "
-                    "Answer providing full content for affected files."
-                    "Provide your answers in the following form:"
-                    "\n```\n\n---{path}---\n{file_content}\n---EOF---```\n"
-                    "No other formatting."
-                 }
-            ]
-        except Exception as e:
-            messagebox.showerror("Error", str(e))  # show error message if any exceptions occur
+            self.analyzer.conversation_history += [{"role": "system", "content": config['analyzer_prompt'] }]
 
     def send_specific_request(self):
         request_text = self.specific_request_text.get(1.0, tk.END).strip()
-
         if not request_text:
-            messagebox.showerror("Error", "Please enter a specific suggestion request")
+            messagebox.showerror("Error", "Please enter a specific request")
             return
 
-        result_text = self.analyzer.send_specific_request(request_text)
-        self.output_text.insert(tk.END, result_text)
+        response = self.analyzer.send_specific_request(request_text)
+        self.output_text.insert(tk.END, response)
+
+
+def main():
+    root = tk.Tk()
+    analyzer = ProjectAnalyzer()
+    ui = ProjectAnalyzerUI(root, analyzer)
+    root.mainloop()
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    ProjectAnalyzerUI(root)
-    root.mainloop()
+    main()
