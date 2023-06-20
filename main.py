@@ -4,18 +4,72 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk  # import ttk for the Combobox widget
 
-
-config = {
+prompts = {
     "initial_prompt": "You will be provided with project files one by one including relative file path and EOF mark."
                       "In response reply exactly 'EOF received' or 'EOF not found'.",
 
-    "analyzer_prompt": "You are software developer profound in python coding."
-                       "You will be asked to refactor the code, add features and test coverage. "
-                       "Answer providing full content for affected files. "
-                       "Provide file content in the following form:"
-                       "\n```\n\n---{path}---\n{file_content}\n---EOF---```\n"
-                       "No other formatting."
+    "analyzer_prompt": "You are software developer profound in python coding. "
+                       "You will be asked to refactor the code, add features and test coverage."
 }
+
+functions = [
+    {
+        "name": "get_updated_files",
+        "description": "Project files created/updated/deleted according to user request",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "path": {
+                                "type": "string",
+                                "description": "Relative path of the file"
+                            },
+                            "action": {
+                                "type": "string",
+                                "enum": ["create", "update", "delete"],
+                                "description": "action performed on file"
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Full content of the file"
+                            },
+                        },
+                    },
+                    "description": "Array of files affected as result of user request",
+                },
+                "comment": {
+                    "type": "string",
+                    "description": "Assistant comment"
+                }
+            },
+            "required": ["files"],
+        },
+    },
+
+    {
+        "name": "get_git_patch",
+        "description": "Git patch according to user request",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "patch": {
+                    "type": "string",
+                    "description": "Git patch",
+                },
+                "comment": {
+                    "type": "string",
+                    "description": "Assistant comment"
+                }
+            },
+            "required": ["patch", "comment"],
+        },
+    }
+]
+
 
 class ProjectAnalyzer:
 
@@ -23,7 +77,7 @@ class ProjectAnalyzer:
         self.api_key = os.environ["OPENAI_API_KEY"]
         openai.api_key = self.api_key
         self.conversation_history = [
-            {"role": "system", "content": config['initial_prompt']}
+            {"role": "system", "content": prompts['initial_prompt']}
         ]
         self.model = "gpt-3.5-turbo-16k"
 
@@ -65,11 +119,13 @@ class ProjectAnalyzer:
             n=1,
             stop=None,
             temperature=0.1,
+            functions=functions,
+            function_call= "auto" #{"name": "get_updated_files"}
         )
 
         self.conversation_history = messages
         print(response)
-        return (f"Request: {request_text}\nResponse: {response.choices[0].message['content']}\n{'-' * 80}\n")
+        return (f"Request: {request_text}\nResponse: {response.choices[0].message.function_call.arguments}\n{'-' * 80}\n")
 
 
 class ProjectAnalyzerUI:
@@ -78,6 +134,9 @@ class ProjectAnalyzerUI:
         self.root = root
         self.root.title("Project Analyzer")
         self.analyzer = analyzer
+
+        # Set initial window size
+        self.root.geometry("960x960")
 
         # Create directory selection UI
         dir_label = tk.Label(root, text="Project Folder:")
@@ -93,7 +152,8 @@ class ProjectAnalyzerUI:
         model_label = tk.Label(root, text="Model:")
         model_label.grid(row=1, column=0, sticky="e", padx=(10, 5), pady=10)
 
-        self.model_combobox = ttk.Combobox(root, values=["gpt-3.5-turbo-16k", "text-davinci-003", "text-curie-003"], state='readonly')
+        self.model_combobox = ttk.Combobox(root, values=["gpt-3.5-turbo-16k", "text-davinci-003", "text-curie-003"],
+                                           state='readonly')
         self.model_combobox.grid(row=1, column=1, padx=(0, 5), pady=10)
         self.model_combobox.set("gpt-3.5-turbo-16k")  # set the default value
 
@@ -159,7 +219,7 @@ class ProjectAnalyzerUI:
             self.output_text.insert(tk.END, result_text)
             self.root.after(1, self.process_next_file)  # schedule the processing of the next file
         except StopIteration:
-            self.analyzer.conversation_history += [{"role": "system", "content": config['analyzer_prompt'] }]
+            self.analyzer.conversation_history += [{"role": "system", "content": prompts['analyzer_prompt']}]
 
     def send_specific_request(self):
         request_text = self.specific_request_text.get(1.0, tk.END).strip()
