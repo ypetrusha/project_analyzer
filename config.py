@@ -5,9 +5,13 @@ prompts = {
     "analyzer_prompt": "You are software developer profound in python coding. "
                        "You will be asked to refactor the code, add features and test coverage."
 }
+
+FUNC_GET_UPDATED_FILES = "get_updated_files"
+FUNC_GET_GIT_PATCH = "get_git_patch"
+
 functions = [
     {
-        "name": "get_updated_files",
+        "name": FUNC_GET_UPDATED_FILES,
         "description": "Project files created/updated/deleted according to user request",
         "parameters": {
             "type": "object",
@@ -44,7 +48,7 @@ functions = [
     },
 
     {
-        "name": "get_git_patch",
+        "name": FUNC_GET_GIT_PATCH,
         "description": "Git patch according to user request",
         "parameters": {
             "type": "object",

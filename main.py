@@ -3,8 +3,9 @@ import openai
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk  # import ttk for the Combobox widget
+import json
 
-from config import prompts, functions
+from config import *
 
 
 class ProjectAnalyzer:
@@ -16,6 +17,65 @@ class ProjectAnalyzer:
             {"role": "system", "content": prompts['initial_prompt']}
         ]
         self.model = "gpt-3.5-turbo-16k"
+        self.function_response = None
+        self.function_type = "none"
+        self.project_folder = None
+
+    def set_project_folder(self, project_folder):
+        self.project_folder = project_folder
+
+    def set_function_type(self, type):
+        if type == FUNC_GET_UPDATED_FILES:
+            self.function_type = {"name": FUNC_GET_UPDATED_FILES}
+        elif type == FUNC_GET_GIT_PATCH:
+            self.function_type = {"name": FUNC_GET_GIT_PATCH}
+        else:
+            self.function_type = "none"
+
+    def get_updated_files(self, files):
+        for file in files:
+            path = file['path']
+            action = file['action']
+            content = file['content']
+
+            if action == 'create':
+                self.create_file(path, content)
+            elif action == 'update':
+                self.update_file(path, content)
+            elif action == 'delete':
+                self.delete_file(path)
+
+    def create_file(self, path, content):
+        file_path = os.path.join(self.project_folder, path)
+        with open(file_path, 'w') as file:
+            file.write(content)
+
+    def update_file(self, path, content):
+        file_path = os.path.join(self.project_folder, path)
+        with open(file_path, 'w') as file:
+            file.write(content)
+
+    def delete_file(self, path):
+        file_path = os.path.join(self.project_folder, path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    def get_git_patch(self, patch):
+        print("patch:")
+        print(patch)
+        file_path = os.path.join(self.project_folder, "patch.diff")
+        with open(file_path, 'w') as file:
+            file.write(patch)
+
+    def process_function_response(self):
+        if self.function_response:
+            name = self.function_response.name
+            print("function_name", self.function_response.name)
+            function_args = json.loads(self.function_response.arguments)
+            if name == FUNC_GET_UPDATED_FILES:
+                self.get_updated_files(function_args["files"])
+            else:
+                self.get_git_patch(function_args["patch"])
 
     def send_file(self, file_path, file_content):
         messages = self.conversation_history + [
@@ -56,12 +116,21 @@ class ProjectAnalyzer:
             stop=None,
             temperature=0.1,
             functions=functions,
-            function_call= "auto" #{"name": "get_updated_files"}
+            function_call=self.function_type
         )
 
         self.conversation_history = messages
+
+        response_message = response["choices"][0]["message"]
         print(response)
-        return (f"Request: {request_text}\nResponse: {response.choices[0].message.function_call.arguments}\n{'-' * 80}\n")
+        content = response_message['content']
+        if response_message.get("function_call"):
+            self.function_response = response.choices[0].message.function_call
+            # self.process_function_response()
+            content = self.function_response
+        else:
+            print(content)
+        return (f"Request: {request_text}\nResponse: {content}\n{'-' * 80}\n")
 
 
 class ProjectAnalyzerUI:
@@ -93,34 +162,57 @@ class ProjectAnalyzerUI:
         self.model_combobox.grid(row=1, column=1, padx=(0, 5), pady=10)
         self.model_combobox.set("gpt-3.5-turbo-16k")  # set the default value
 
+        # Create function type selection UI
+        function_type_label = tk.Label(root, text="Function Type:")
+        function_type_label.grid(row=2, column=0, sticky="e", padx=(10, 5), pady=10)
+
+        self.function_type_var = tk.StringVar(value="none")
+        function_type_none_radio = tk.Radiobutton(root, text="None", variable=self.function_type_var, value="none",
+                                                 command=lambda: self.analyzer.set_function_type("none"))
+        function_type_none_radio.grid(row=2, column=1, padx=(0, 5), pady=10)
+
+        function_type_files_radio = tk.Radiobutton(root, text="Get Updated Files", variable=self.function_type_var,
+                                                  value=FUNC_GET_UPDATED_FILES,
+                                                  command=lambda: self.analyzer.set_function_type(FUNC_GET_UPDATED_FILES))
+        function_type_files_radio.grid(row=2, column=2, padx=(0, 5), pady=10)
+
+        function_type_patch_radio = tk.Radiobutton(root, text="Get Git Patch", variable=self.function_type_var,
+                                                  value=FUNC_GET_GIT_PATCH,
+                                                  command=lambda: self.analyzer.set_function_type(FUNC_GET_GIT_PATCH))
+        function_type_patch_radio.grid(row=2, column=3, padx=(0, 10), pady=10)
+
         # Create send project files button
         send_files_button = tk.Button(root, text="Send Project Files", command=self.send_project_files)
-        send_files_button.grid(row=2, column=0, columnspan=3, pady=(0, 10))
+        send_files_button.grid(row=3, column=0, columnspan=4, pady=(0, 10))
 
         # Create specific request input UI
         specific_request_label = tk.Label(root, text="Specific Request:")
-        specific_request_label.grid(row=3, column=0, sticky="e", padx=(10, 5), pady=10)
+        specific_request_label.grid(row=4, column=0, sticky="e", padx=(10, 5), pady=10)
 
         self.specific_request_text = tk.Text(root, wrap=tk.WORD, width=60, height=5)
-        self.specific_request_text.grid(row=3, column=1, padx=(0, 5), pady=10)
+        self.specific_request_text.grid(row=4, column=1, padx=(0, 5), pady=10)
 
         send_request_button = tk.Button(root, text="Send", command=self.send_specific_request)
-        send_request_button.grid(row=3, column=2, padx=(0, 10), pady=10)
+        send_request_button.grid(row=4, column=2, padx=(0, 10), pady=10)
+
+        # Create process function response button
+        process_response_button = tk.Button(root, text="Process Function Response", command=self.process_function_response)
+        process_response_button.grid(row=5, column=0, columnspan=4, pady=(0, 10))
 
         # Create output text area
         output_label = tk.Label(root, text="Output:")
-        output_label.grid(row=4, column=0, sticky="nw", padx=(10, 5), pady=(0, 5))
+        output_label.grid(row=6, column=0, sticky="nw", padx=(10, 5), pady=(0, 5))
 
         self.output_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)
-        self.output_text.grid(row=5, column=0, columnspan=3, padx=(10, 10), pady=(0, 10), sticky="nsew")
+        self.output_text.grid(row=7, column=0, columnspan=4, padx=(10, 10), pady=(0, 10), sticky="nsew")
 
         output_scrollbar = tk.Scrollbar(root, command=self.output_text.yview)
-        output_scrollbar.grid(row=5, column=3, sticky="ns", pady=(0, 10))
+        output_scrollbar.grid(row=7, column=4, sticky="ns", pady=(0, 10))
         self.output_text["yscrollcommand"] = output_scrollbar.set
 
         # Allow the main window to resize its columns and rows
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(5, weight=1)
+        self.root.rowconfigure(7, weight=1)
 
     def browse_directory(self):
         folder_path = filedialog.askdirectory()
@@ -134,6 +226,8 @@ class ProjectAnalyzerUI:
         if not project_folder:
             messagebox.showerror("Error", "Please select a project folder")
             return
+
+        self.analyzer.set_project_folder(project_folder)
 
         # Set the model
         self.analyzer.model = self.model_combobox.get()
@@ -165,6 +259,9 @@ class ProjectAnalyzerUI:
 
         response = self.analyzer.send_specific_request(request_text)
         self.output_text.insert(tk.END, response)
+
+    def process_function_response(self):
+        self.analyzer.process_function_response()
 
 
 def main():
