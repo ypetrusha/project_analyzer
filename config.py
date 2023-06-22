@@ -49,13 +49,14 @@ functions = [
 
     {
         "name": FUNC_GET_GIT_PATCH,
-        "description": "Git patch according to user request",
+        "description": "Git diff file with header according to user request that can be applied as patch to project files",
         "parameters": {
             "type": "object",
             "properties": {
                 "patch": {
                     "type": "string",
-                    "description": "Git patch",
+                    "description": "Git patch file content. Includes header with changed file info and index. "
+                                   "Example: diff --git a/config.py b/config.py\\nindex 769a7b0..edff3c7 100644\\n--- a/config.py\\n+++ b/config.py",
                 },
                 "comment": {
                     "type": "string",
