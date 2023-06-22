@@ -3,6 +3,7 @@ import openai
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk  # import ttk for the Combobox widget
+import tkinter.messagebox as messagebox
 import json
 
 from config import *
@@ -261,8 +262,12 @@ class ProjectAnalyzerUI:
         self.output_text.insert(tk.END, response)
 
     def process_function_response(self):
-        self.analyzer.process_function_response()
-
+        # Display a confirmation dialog
+        result = messagebox.askquestion("Confirmation", "This action will override project files. Are you sure you want to proceed?", icon="warning")
+        if result == "yes":
+            self.analyzer.process_function_response()
+        else:
+            messagebox.showinfo("Cancelled", "Action cancelled.")
 
 def main():
     root = tk.Tk()
