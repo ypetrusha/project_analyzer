@@ -34,8 +34,9 @@ functions = [
                                 "type": "string",
                                 "description": "1. Full content of the file. "
                                                "Do not omit any code. Example: in created file do not put '# Rest of the code...' comment, list all code instead. "
-                                               "2. Escape new line symbols in quotes. "
-                                               "Example: f'Here is the Python file {file_path}:\\\n\\\n{file_content}\\\n\\\nEOF'"
+                                               "2. Escape new line symbols in single or double quotes. "
+                                               "Example: f'Here is the Python file {file_path}:\\\n\\\n{file_content}\\\n\\\nEOF' "
+                                               "3. Do not add empty lines"
                             },
                         },
                     },
