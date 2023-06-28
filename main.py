@@ -1,6 +1,7 @@
 import os
 import openai
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import filedialog, messagebox
 from tkinter import ttk  # import ttk for the Combobox widget
 import tkinter.messagebox as messagebox
@@ -148,7 +149,6 @@ class ProjectAnalyzer:
         return content
 
 
-
 class ProjectAnalyzerUI:
 
     def __init__(self, root, analyzer):
@@ -157,7 +157,10 @@ class ProjectAnalyzerUI:
         self.analyzer = analyzer
 
         # Set initial window size
-        self.root.geometry("960x960")
+        self.root.geometry("1024x960")
+
+        # Set font size
+        self.root.option_add("*Font", "Consolas 11")
 
         # Create directory selection UI
         dir_label = tk.Label(root, text="Project Folder:")
@@ -222,7 +225,7 @@ class ProjectAnalyzerUI:
         self.output_text = tk.Text(root, wrap=tk.WORD, width=80, height=20)
         self.output_text.grid(row=7, column=0, columnspan=4, padx=(10, 10), pady=(0, 10), sticky="nsew")
 
-        output_scrollbar = tk.Scrollbar(root, command=self.output_text.yview)
+        output_scrollbar = tk.Scrollbar(root, command=self.output_text.yview, orient=tk.VERTICAL, takefocus=0)
         output_scrollbar.grid(row=7, column=4, sticky="ns", pady=(0, 10))
         self.output_text["yscrollcommand"] = output_scrollbar.set
 
@@ -283,6 +286,7 @@ class ProjectAnalyzerUI:
             self.analyzer.process_function_response()
         else:
             messagebox.showinfo("Cancelled", "Action cancelled.")
+
 
 def main():
     root = tk.Tk()
