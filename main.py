@@ -142,7 +142,7 @@ class ProjectAnalyzer:
         if name == FUNC_GET_UPDATED_FILES:
             files = function_args["files"]
             for file in files:
-                content += f"{file['path']}\naction: {file['action']}\n{'-' * 80}\n{file['content']}\n{'-' * 80}\n"
+                content += f"path: {file['path']}\naction: {file['action']}\n{'-' * 80}\n{file['content']}\n{'-' * 80}\n"
         else:
             content += f"{function_args['patch']}"
 
