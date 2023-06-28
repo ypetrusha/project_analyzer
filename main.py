@@ -115,7 +115,7 @@ class ProjectAnalyzer:
             max_tokens=8000,
             n=1,
             stop=None,
-            temperature=0.1,
+            temperature=0,
             functions=functions,
             function_call=self.function_type
         )
