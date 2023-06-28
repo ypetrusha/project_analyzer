@@ -32,8 +32,10 @@ functions = [
                             },
                             "content": {
                                 "type": "string",
-                                "description": "Full content of the file. Escape new line symbols in quotes. "
-                                               "Example: f\"Here is the Python file {file_path}:\\\n\\\n{file_content}\\\n\\\nEOF\""
+                                "description": "1. Full content of the file. "
+                                               "Do not omit any code. Example: in created file do not put '# Rest of the code...' comment, list all code instead. "
+                                               "2. Escape new line symbols in quotes. "
+                                               "Example: f'Here is the Python file {file_path}:\\\n\\\n{file_content}\\\n\\\nEOF'"
                             },
                         },
                     },

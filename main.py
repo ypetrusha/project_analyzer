@@ -128,10 +128,25 @@ class ProjectAnalyzer:
         if response_message.get("function_call"):
             self.function_response = response.choices[0].message.function_call
             # self.process_function_response()
-            content = self.function_response
+            content = self.list_response_content()
         else:
             print(content)
-        return (f"Request: {request_text}\nResponse: {content}\n{'-' * 80}\n")
+
+        return (f"Request: {request_text}\nResponse:\n{content}\n{'-' * 80}\n")
+
+    def list_response_content(self):
+        name = self.function_response.name
+        function_args = json.loads(self.function_response.arguments)
+        content = f"function: {name}\ncomment: {function_args.get('comment')}\n"
+        if name == FUNC_GET_UPDATED_FILES:
+            files = function_args["files"]
+            for file in files:
+                content += f"{file['path']}\naction: {file['action']}\n{'-' * 80}\n{file['content']}\n{'-' * 80}\n"
+        else:
+            content += f"{function_args['patch']}"
+
+        return content
+
 
 
 class ProjectAnalyzerUI:
