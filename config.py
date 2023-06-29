@@ -4,7 +4,6 @@ prompts = {
 
     "analyzer_prompt": "You are software developer profound in python coding. "
                        "You will be asked to refactor the code, add features and test coverage. "
-                       "Answer providing full content of the modified files"
 }
 
 FUNC_GET_UPDATED_FILES = "get_updated_files"
@@ -54,14 +53,18 @@ functions = [
 
     {
         "name": FUNC_GET_GIT_PATCH,
-        "description": "Git diff file with header according to user request that can be applied as patch to project files",
+        "description": "Git diff file with all the changes according to user request",
         "parameters": {
             "type": "object",
             "properties": {
                 "patch": {
                     "type": "string",
-                    "description": "Git patch file content. Includes header with changed file info and index. "
-                                   "Example: diff --git a/config.py b/config.py\\nindex 769a7b0..edff3c7 100644\\n--- a/config.py\\n+++ b/config.py",
+                    "description": "Git patch file content. It can contain changes to multiple files. "
+                                   "Includes headers with changed files info and index. "
+                                   "Example:\\n\\ndiff --git a/config.py b/config.py\\nindex 769a7b0..edff3c7 100644"
+                                   "\\n--- a/config.py\\n+++ b/config.py\\n{changes to config.py}\\n"
+                                   "diff --git a/ui.py b/ui.py\\nindex 7698ab0..edf3c7c7 100644"
+                                   "\\n--- a/ui.py\\n+++ b/ui.py\\n{changes to ui.py}\\n\\n",
                 },
                 "comment": {
                     "type": "string",
