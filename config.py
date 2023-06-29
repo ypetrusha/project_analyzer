@@ -1,9 +1,10 @@
 prompts = {
-    "initial_prompt": "You will be provided with project files one by one including relative file path and EOF mark."
-                      "In response reply exactly 'EOF received' or 'EOF not found'.",
+    "initial_prompt": "You will be provided with project files one by one including relative file path."
+                      "Format:{file_path}:\\n\\n{file_content}\\n\\n",
 
     "analyzer_prompt": "You are software developer profound in python coding. "
-                       "You will be asked to refactor the code, add features and test coverage."
+                       "You will be asked to refactor the code, add features and test coverage. "
+                       "Answer providing full content of the modified files"
 }
 
 FUNC_GET_UPDATED_FILES = "get_updated_files"

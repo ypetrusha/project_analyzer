@@ -76,13 +76,13 @@ class ProjectAnalyzer:
 
     def send_file(self, file_path, file_content):
         messages = self.conversation_history + [
-            {"role": "user", "content": f"Here is the Python file {file_path}:\n\n{file_content}\n\nEOF"}
+            {"role": "user", "content": f"{file_path}:\n\n{file_content}\n\n"}
         ]
 
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
-            max_tokens=10,
+            max_tokens=1,
             n=1,
             stop=None,
             temperature=0,
@@ -142,5 +142,3 @@ class ProjectAnalyzer:
             content += f"{function_args['patch']}"
 
         return content
-
-

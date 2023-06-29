@@ -144,4 +144,3 @@ class ProjectAnalyzerUI:
             self.analyzer.process_function_response()
         else:
             messagebox.showinfo("Cancelled", "Action cancelled.")
-
