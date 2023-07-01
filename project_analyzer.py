@@ -98,7 +98,7 @@ class ProjectAnalyzer:
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=messages,
-            max_tokens=8000,
+            max_tokens=6000,
             n=1,
             stop=None,
             temperature=0,
@@ -115,7 +115,10 @@ class ProjectAnalyzer:
             self.function_response = response.choices[0].message.function_call
             # self.process_function_response()
             content = self.list_response_content()
+            self.conversation_history += [{"role": "assistant", "name": self.function_response.name,
+                                           "content": None, "function_call": self.function_response}]
         else:
+            self.conversation_history += [{"role": "assistant", "content": content}]
             print(content)
 
         return (f"Request: {request_text}\nResponse:\n{content}\n{'-' * 80}\n")
@@ -123,7 +126,7 @@ class ProjectAnalyzer:
     def list_response_content(self):
         name = self.function_response.name
         function_args = json.loads(self.function_response.arguments)
-        content = f"function: {name}\ncomment: {function_args.get('comment')}\n"
+        content = f"function: {name}\ncomment: {function_args.get('comment')}\n\n"
         if name == FUNC_GET_UPDATED_FILES:
             files = function_args["files"]
             for file in files:
