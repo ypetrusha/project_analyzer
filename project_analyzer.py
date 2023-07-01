@@ -78,18 +78,8 @@ class ProjectAnalyzer:
         messages = self.conversation_history + [
             {"role": "user", "content": f"{file_path}:\n\n{file_content}\n\n"}
         ]
-
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=messages,
-            max_tokens=1,
-            n=1,
-            stop=None,
-            temperature=0,
-        )
-
         self.conversation_history = messages
-        return response.choices[0].message['content']
+        return file_path
 
     def send_files_to_chat(self, project_folder):
         project_folder = os.path.abspath(project_folder)
