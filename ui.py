@@ -126,7 +126,7 @@ class ProjectAnalyzerUI:
             self.output_text.insert(tk.END, result_text)
             self.root.after(1, self.process_next_file)  # schedule the processing of the next file
         except StopIteration:
-            self.analyzer.conversation_history += [{"role": "system", "content": prompts['analyzer_prompt']}]
+            self.analyzer.files_sent()
 
     def send_specific_request(self):
         request_text = self.specific_request_text.get(1.0, tk.END).strip()

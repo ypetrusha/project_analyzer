@@ -17,6 +17,8 @@ class ProjectAnalyzer:
         self.function_response = None
         self.function_type = "none"
         self.project_folder = None
+        self.use_single_msg_hist = True
+        self.file_history = ''
 
     def set_project_folder(self, project_folder):
         self.project_folder = project_folder
@@ -75,11 +77,21 @@ class ProjectAnalyzer:
                 self.get_git_patch(function_args["patch"])
 
     def send_file(self, file_path, file_content):
-        messages = self.conversation_history + [
-            {"role": "user", "content": f"{file_path}:\n\n{file_content}\n\n"}
-        ]
-        self.conversation_history = messages
+        if self.use_single_msg_hist:
+            self.file_history += f"{file_path}:\n\n{file_content}\n\n"
+        else:
+            self.conversation_history += [
+                {"role": "user", "content": f"{file_path}:\n\n{file_content}\n\n"}
+            ]
         return file_path
+
+    def files_sent(self):
+        if self.use_single_msg_hist:
+            self.conversation_history += self.conversation_history + [
+                {"role": "user", "content": self.file_history}
+            ]
+        self.conversation_history += [{"role": "system", "content": prompts['analyzer_prompt']}]
+
 
     def send_files_to_chat(self, project_folder):
         project_folder = os.path.abspath(project_folder)
