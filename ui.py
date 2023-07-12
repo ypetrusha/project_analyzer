@@ -40,20 +40,20 @@ class ProjectAnalyzerUI:
         self.model_combobox.set("gpt-3.5-turbo-16k")  # set the default value
 
         # Create function type selection UI
-        function_type_label = tk.Label(root, text="Function Type:")
+        function_type_label = tk.Label(root, text="Operating Mode:")
         function_type_label.grid(row=2, column=0, sticky="e", padx=(10, 5), pady=10)
 
         self.function_type_var = tk.StringVar(value="none")
-        function_type_none_radio = tk.Radiobutton(root, text="None", variable=self.function_type_var, value="none",
+        function_type_none_radio = tk.Radiobutton(root, text="Chat", variable=self.function_type_var, value="none",
                                                  command=lambda: self.analyzer.set_function_type("none"))
         function_type_none_radio.grid(row=2, column=1, padx=(0, 5), pady=10)
 
-        function_type_files_radio = tk.Radiobutton(root, text="Get Updated Files", variable=self.function_type_var,
+        function_type_files_radio = tk.Radiobutton(root, text="Files override", variable=self.function_type_var,
                                                   value=FUNC_GET_UPDATED_FILES,
                                                   command=lambda: self.analyzer.set_function_type(FUNC_GET_UPDATED_FILES))
         function_type_files_radio.grid(row=2, column=2, padx=(0, 5), pady=10)
 
-        function_type_patch_radio = tk.Radiobutton(root, text="Get Git Patch", variable=self.function_type_var,
+        function_type_patch_radio = tk.Radiobutton(root, text="Git Patch", variable=self.function_type_var,
                                                   value=FUNC_GET_GIT_PATCH,
                                                   command=lambda: self.analyzer.set_function_type(FUNC_GET_GIT_PATCH))
         function_type_patch_radio.grid(row=2, column=3, padx=(0, 10), pady=10)
@@ -73,7 +73,7 @@ class ProjectAnalyzerUI:
         send_request_button.grid(row=4, column=2, padx=(0, 10), pady=10)
 
         # Create process function response button
-        process_response_button = tk.Button(root, text="Process Function Response", command=self.process_function_response)
+        process_response_button = tk.Button(root, text="Apply Changes", command=self.process_function_response)
         process_response_button.grid(row=5, column=0, columnspan=4, pady=(0, 10))
 
         # Create output text area
